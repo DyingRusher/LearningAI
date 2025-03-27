@@ -42,7 +42,7 @@ prompt = user_data + (" plan a meal plan for 7 days with given information,follo
 if st.button("Generate Meal plan"):
     with st.spinner("Generating meal plan"):
         print(prompt)
-        res_text = generate_text_off(prompt)
+        res_text = load_generate_text_off(prompt)
         # Check if the string starts with ```json and remove it
         print("res",res_text)
         if res_text.startswith("```json"):

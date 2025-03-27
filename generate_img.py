@@ -1,28 +1,39 @@
 import torch
-from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler ,DiffusionPipeline
-from diffusers import StableDiffusionXLImg2ImgPipeline
-from diffusers.utils import load_image
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 
-# Remaining
-# use lora
-# use refiner 
-model_id = "stabilityai/stable-diffusion-2-1"
+# Model and LoRA paths
+model_id = "stabilityai/stable-diffusion-xl-base-1.0"
+lora_model_path = "lora/ColoringBookRedmond-ColoringBook-ColoringBookAF.safetensors"
 
-# Use the DPMSolverMultistepScheduler (DPM-Solver++) scheduler here instead
-pipe = DiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16)
+# Load the base model
+pipe = StableDiffusionPipeline.from_pretrained(
+    model_id, 
+    torch_dtype=torch.float16,
+    variant="fp16",
+    use_safetensors=True
+)
 
+# Set the scheduler for better results
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-pipe = pipe.to("cuda")
 
-prompt = "a photo of an astronaut riding a horse on mars"
-height = 1024
-width = 1024
-num_inference_steps = 25
-denoising_factor = 0.8 # similarity between base and refined model
+# Load the LoRA weights - requires PEFT
+pipe.load_lora_weights(lora_model_path)
 
-# base model step = 0.8*25
-# refined model step = 0.2*25
+# Enable CPU offloading for memory efficiency
+pipe.enable_model_cpu_offload()
 
-image = pipe(prompt).images[0]
+# Set your prompt - add any trigger words that might be specific to this LoRA
+prompt = "a photo of an astronaut riding a horse on mars, coloring book style"
 
-image.save("astronaut_rides_horse_simple.png")
+# Generate the image
+image = pipe(
+    prompt=prompt,
+    height=1024,
+    width=1024,
+    num_inference_steps=25,
+    guidance_scale=7.5,
+    cross_attention_kwargs={"scale": 0.8}  # Adjust LoRA strength between 0-1
+).images[0]
+
+# Save the result
+image.save("astronaut_coloring_book.png")

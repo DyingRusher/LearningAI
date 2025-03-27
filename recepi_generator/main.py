@@ -27,9 +27,9 @@ if st.button("Generate Recipe"):
                  f" Include preparation steps , ingredients and cooking steps and time."\
                  f" Follow the output format: {output_format}"
         
-        res_text = generate_text_off(prompt_text)
+        res_text = load_generate_text_off(prompt_text)
         st.markdown(res_text,unsafe_allow_html=True)
 
     with st.spinner("Generating Image"):
-        image = generate_img_off(recipe + " realistic image")
+        image = load_generate_img_off(recipe + " realistic image")
         st.image(image)
